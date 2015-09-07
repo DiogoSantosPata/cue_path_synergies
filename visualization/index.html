@@ -1,0 +1,271 @@
+<html>
+
+<style>
+	body{ background-color: rgb(40,40,40); }
+</style>
+
+<title>Hippocampus</title>
+
+
+<body onload="init()">
+
+	<div id="visualization"></div>
+
+	<!-- <h1 style="font-family:Courier New; color:#d3d3d3">Hippocampal activity</h1> -->
+	<h4 style="font-family:Courier New;   color:#d3d3d3" > Hippocampal activity</h4>
+
+
+	<h5 style="position:absolute; top:80px; left:50px;  font-family:Courier New; color:#d3d3d3" >MEC II</h5>
+	<canvas id="Canvas_GC_1" width="150" height="150" style="position:absolute; top:120px; left:50px;  border:1px solid #d3d3d3";></canvas>
+	<canvas id="Canvas_GC_2" width="150" height="150" style="position:absolute; top:120px; left:270px; border:1px solid #d3d3d3";></canvas>
+	<!-- <canvas id="Canvas_GC_3" width="150" height="150" style="position:absolute; top:120px; left:490px; border:1px solid #d3d3d3";></canvas> -->
+
+
+	<h5 style="position:absolute; top:80px; left:490px;  font-family:Courier New; color:#d3d3d3" >LEC</h5>
+	<canvas id="Canvas_LEC" width="150" height="150" style="position:absolute; top:120px; left:490px; border:1px solid #d3d3d3";></canvas>
+
+
+
+	<h5 style="position:absolute; top:330px; left:50px;  font-family:Courier New; color:#d3d3d3">Dentate Gyrus</h5>
+	<canvas id="Canvas_PC_DG"   width="150" height="150" style="position:absolute; top:370px; left:50px;  border:1px solid #d3d3d3";></canvas>
+
+<!-- 	<h5 style="position:absolute; top:330px; left:270px;  font-family:Courier New; color:#d3d3d3">CA3</h5>
+	<canvas id="Canvas_PC_CA3"   width="150" height="150" style="position:absolute; top:370px; left:270px;  border:1px solid #d3d3d3";></canvas>
+
+	<h5 style="position:absolute; top:330px; left:490px;  font-family:Courier New; color:#d3d3d3">CA1</h5>
+	<canvas id="Canvas_PC_CA1"   width="150" height="150" style="position:absolute; top:370px; left:490;  border:1px solid #d3d3d3";></canvas>
+ -->
+	<h5 style="position:absolute; top:80px; left:800px;  font-family:Courier New; color:#d3d3d3 ">Robot arena</h5>
+	<canvas id="Agent_arena" width="400" height="400" style="position:absolute; top:120px; left:800px;  border:1px solid #d3d3d3";></canvas>
+
+
+
+<!-- 	<button onclick="reconnect()">Reconnect</button>
+	<button onclick="quit()">Pause</button> -->
+
+
+</body>
+
+
+
+<!-- Websocket -->
+<script type="text/javascript">
+// Config
+var port = 9000;
+var host = "ws://127.0.0.1:"+port; // No need to change this if using localhost
+
+//Declare Variables
+var socket;
+var explodedValues;
+var counter = 0;
+
+var square_size_gc = 10*0.75;
+var square_size_pc = 7.5; //20*0.75;
+
+var ctx;
+var number_of_loops; // for different sized matrixes...
+
+var net_color =  'rgba(220,110,20,' //'rgba(0,0,255,';  // 'rgba(0,0,250,';   
+
+function init() {
+	try {
+		socket = new WebSocket(host);
+		console.log('WebSocket status '+socket.readyState);
+		socket.onopen    = function(msg) { 
+							   console.log("Welcome - status "+this.readyState); 
+						   };
+
+		socket.onmessage = function(msg) {
+		  				    explodedValues = msg.data.split(';');
+    						drawVisualization();    						
+						   };
+
+		socket.onclose   = function(msg) { 
+							   console.log("Disconnected - status "+this.readyState); 
+						   };
+	}
+	catch(ex){ 
+		console.log(ex); 
+	}
+	
+}
+
+function quit(){
+	if (socket != null) {
+		console.log("Close Socket");
+		socket.close();
+		socket=null;
+	}
+}
+function reconnect() {
+	quit();
+	init();
+}
+
+
+
+
+function drawVisualization() {
+	counter = 1;
+
+	if ( explodedValues[0] == '1.0' ) // Grid cells
+	{  
+		canvas_1 = document.getElementById("Canvas_GC_1");
+		canvas_2 = document.getElementById("Canvas_GC_2");
+		// canvas_3 = document.getElementById("Canvas_GC_3");
+
+		ctx_1 = canvas_1.getContext('2d');
+		ctx_2 = canvas_2.getContext('2d');
+		// ctx_3 = canvas_3.getContext('2d');
+
+		ctx_1.clearRect(0, 0, canvas_1.width, canvas_1.height);
+		ctx_2.clearRect(0, 0, canvas_2.width, canvas_2.height);
+		// ctx_3.clearRect(0, 0, canvas_3.width, canvas_3.height);
+
+
+		ctx_1.fillStyle = 'rgba(255,255,255,1)';
+		ctx_1.fillRect(0, 0, canvas_1.width, canvas_1.height);
+
+		ctx_2.fillStyle = 'rgba(255,255,255,1)';
+		ctx_2.fillRect(0, 0, canvas_2.width, canvas_2.height);
+
+		// ctx_3.fillStyle = 'rgba(255,255,255,1)';
+		// ctx_3.fillRect(0, 0, canvas_3.width, canvas_3.height);
+
+
+		for(var x=0;x<20;x++){
+			for(var y=0;y<20;y++){
+				ctx_1.fillStyle = net_color+explodedValues[counter]+')';
+				ctx_1.fillRect(x*square_size_gc, y*square_size_gc, square_size_gc, square_size_gc);
+
+				ctx_2.fillStyle = net_color+explodedValues[counter+400]+')';
+				ctx_2.fillRect(x*square_size_gc, y*square_size_gc, square_size_gc, square_size_gc);
+
+				// ctx_3.fillStyle = net_color+explodedValues[counter+800]+')';
+				// ctx_3.fillRect(x*square_size_gc, y*square_size_gc, square_size_gc, square_size_gc);
+
+				counter = counter + 1;
+			}
+		}
+	}
+
+
+
+	if ( explodedValues[0] == '6.0' ) // LEC cells
+	{  
+		canvas = document.getElementById("Canvas_LEC");
+	    ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = 'rgba(255,255,255,1)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		for(var x=0;x<20;x++){
+			for(var y=0;y<20;y++){
+				ctx.fillStyle = net_color+explodedValues[counter]+')';
+				ctx.fillRect(x*square_size_pc, y*square_size_pc, square_size_pc, square_size_pc);
+				counter = counter + 1;
+			}
+		}
+	}
+
+
+
+
+	if ( explodedValues[0] == '2.0' ) // Place cells DG
+	{  
+		canvas = document.getElementById("Canvas_PC_DG");
+	    ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = 'rgba(255,255,255,1)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		for(var x=0;x<20;x++){
+			for(var y=0;y<20;y++){
+				ctx.fillStyle = net_color+explodedValues[counter]+')';
+				ctx.fillRect(x*square_size_pc, y*square_size_pc, square_size_pc, square_size_pc);
+				counter = counter + 1;
+			}
+		}
+	}
+
+
+
+
+	if ( explodedValues[0] == '3.0' ) // Place cells CA3
+	{  
+		canvas = document.getElementById("Canvas_PC_CA3");
+	
+	    ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		ctx.fillStyle = 'rgba(255,255,255,1)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+		for(var x=0;x<20;x++){
+			for(var y=0;y<20;y++){
+				ctx.fillStyle = net_color+explodedValues[counter]+')';
+				ctx.fillRect(x*square_size_pc, y*square_size_pc, square_size_pc, square_size_pc);
+				counter = counter + 1;
+			}
+		}
+	}
+
+
+
+	if ( explodedValues[0] == '4.0' ) // Place cells CA1
+	{  
+		canvas = document.getElementById("Canvas_PC_CA1");
+	
+	    ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		ctx.fillStyle = 'rgba(255,255,255,1)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+		for(var x=0;x<20;x++){
+			for(var y=0;y<20;y++){
+				ctx.fillStyle = net_color+explodedValues[counter]+')';
+				ctx.fillRect(x*square_size_pc, y*square_size_pc, square_size_pc, square_size_pc);
+				counter = counter + 1;
+			}
+		}
+	}
+
+
+
+	if(  explodedValues[0] == '5.0'  ) // Agent  arena
+	{
+		canvas = document.getElementById("Agent_arena");
+	    ctx = canvas.getContext('2d');
+		ctx.beginPath();
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		ctx.fillStyle = 'rgba(255,255,255,1)';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		
+		// ctx.beginPath();
+
+		// ctx.lineWidth = 30;
+		// ctx.moveTo(200,30);
+		// ctx.lineTo(200,360);
+		// ctx.lineTo(30,360);
+		// ctx.lineTo(200,30);
+		// ctx.lineTo(370,360);
+		// ctx.lineTo(200,360);
+		// ctx.strokeStyle = 'rgba(40,40,40,1)' ;
+		// ctx.stroke();
+
+		ctx.beginPath();
+		ctx.arc(explodedValues[1], explodedValues[2], 10, 0, 2*Math.PI);
+		ctx.fillStyle = 'rgba(250,0,0,1)' ;
+		ctx.fill();
+	}
+
+};
+
+</script>
+
+
+</html>
